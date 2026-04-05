@@ -133,8 +133,14 @@ function parseTweetDetailResponse(response) {
   const allCursors = [];
   const modules = new Map(); // entryId → tweets[]
 
-  const instructions =
-    response?.data?.threaded_conversation_with_injections_v2?.instructions ?? [];
+  // Handle the wrapper from client.graphql() which returns { data: json, cursor }
+  // where json itself has { data: { threaded_conversation_with_injections... } }
+  const apiData = response?.data?.data ?? response?.data ?? response;
+  const conversation =
+    apiData?.threaded_conversation_with_injections_v2 ??
+    apiData?.threaded_conversation_with_injections ??
+    {};
+  const instructions = conversation?.instructions ?? [];
 
   for (const instruction of instructions) {
     const type = instruction.type;

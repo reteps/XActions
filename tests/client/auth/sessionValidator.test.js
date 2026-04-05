@@ -12,10 +12,12 @@ import { AuthenticationError, ScraperError } from '../../../src/client/errors.js
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const VALID_USER = {
-  id_str: '123456',
-  screen_name: 'alice',
-  name: 'Alice',
-  profile_image_url_https: 'https://pbs.twimg.com/profile/alice.jpg',
+  users: [{
+    user_id: '123456',
+    screen_name: 'alice',
+    name: 'Alice',
+    avatar_image_url: 'https://pbs.twimg.com/profile/alice.jpg',
+  }],
 };
 
 function makeOkResponse(body = VALID_USER) {
@@ -196,7 +198,7 @@ describe('SessionValidator', () => {
 
       expect(mocks.tokenManager.getHeaders).toHaveBeenCalledWith(true);
       expect(mocks.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('verify_credentials'),
+        expect.stringContaining('multi/list'),
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({ Authorization: 'Bearer AAAA' }),
@@ -204,9 +206,9 @@ describe('SessionValidator', () => {
       );
     });
 
-    it('handles null profile_image_url_https', async () => {
+    it('handles null avatar_image_url', async () => {
       mocks.fetch.mockReturnValueOnce(makeOkResponse({
-        id_str: '99', screen_name: 'bob', name: 'Bob',
+        users: [{ user_id: '99', screen_name: 'bob', name: 'Bob' }],
       }));
 
       const result = await validator.validate();

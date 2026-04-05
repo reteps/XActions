@@ -11,7 +11,9 @@
 
 import { AuthenticationError, ScraperError } from '../errors.js';
 
-const VERIFY_CREDENTIALS_URL = 'https://api.x.com/1.1/account/verify_credentials.json';
+// NOTE: verify_credentials.json was removed by Twitter/X (~2026-03, returns 404).
+// account/multi/list.json returns the authenticated user's info and works with cookie sessions.
+const VERIFY_CREDENTIALS_URL = 'https://x.com/i/api/1.1/account/multi/list.json';
 
 // ============================================================================
 // SessionValidator Class
@@ -50,14 +52,17 @@ export class SessionValidator {
       });
 
       if (response.ok) {
-        const user = await response.json();
+        const data = await response.json();
+        // account/multi/list.json returns { users: [{ user_id, screen_name, name, ... }] }
+        const users = data.users || data;
+        const primary = Array.isArray(users) ? users[0] : data;
         return {
           valid: true,
           user: {
-            id: user.id_str,
-            username: user.screen_name,
-            displayName: user.name,
-            profileImageUrl: user.profile_image_url_https || null,
+            id: primary.user_id || primary.id_str,
+            username: primary.screen_name,
+            displayName: primary.name,
+            profileImageUrl: primary.avatar_image_url || primary.profile_image_url_https || null,
           },
         };
       }
@@ -93,14 +98,16 @@ export class SessionValidator {
         });
 
         if (retryResponse.ok) {
-          const user = await retryResponse.json();
+          const data = await retryResponse.json();
+          const users = data.users || data;
+          const primary = Array.isArray(users) ? users[0] : data;
           return {
             valid: true,
             user: {
-              id: user.id_str,
-              username: user.screen_name,
-              displayName: user.name,
-              profileImageUrl: user.profile_image_url_https || null,
+              id: primary.user_id || primary.id_str,
+              username: primary.screen_name,
+              displayName: primary.name,
+              profileImageUrl: primary.avatar_image_url || primary.profile_image_url_https || null,
             },
           };
         }
@@ -155,14 +162,16 @@ export class SessionValidator {
     }
 
     if (response.ok) {
-      const user = await response.json();
+      const data = await response.json();
+      const users = data.users || data;
+      const primary = Array.isArray(users) ? users[0] : data;
       return {
         valid: true,
         user: {
-          id: user.id_str,
-          username: user.screen_name,
-          displayName: user.name,
-          profileImageUrl: user.profile_image_url_https || null,
+          id: primary.user_id || primary.id_str,
+          username: primary.screen_name,
+          displayName: primary.name,
+          profileImageUrl: primary.avatar_image_url || primary.profile_image_url_https || null,
         },
       };
     }
