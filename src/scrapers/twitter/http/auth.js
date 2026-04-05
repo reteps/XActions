@@ -570,8 +570,11 @@ export class TwitterAuth {
     }
 
     try {
+      // NOTE: verify_credentials.json was removed by Twitter/X (returns 404 as of ~2026-03).
+      // Use account/multi/list.json instead — it returns the authenticated user's info
+      // and works with cookie-based sessions.
       const res = await this.#fetch(
-        `${WEB_BASE}/i/api/1.1/account/verify_credentials.json`,
+        `${WEB_BASE}/i/api/1.1/account/multi/list.json`,
         {
           method: 'GET',
           headers: this.getHeaders(true),
@@ -583,20 +586,23 @@ export class TwitterAuth {
         return {
           valid: false,
           user: null,
-          reason: `verify_credentials returned HTTP ${res.status}`,
+          reason: `account/multi/list returned HTTP ${res.status}`,
           status: res.status,
         };
       }
 
       const data = await res.json();
-      if (!data.id_str && !data.id) {
-        return { valid: false, user: null, reason: 'Response missing user ID' };
+      const users = data.users || data;
+      const primary = Array.isArray(users) ? users[0] : null;
+
+      if (!primary || (!primary.user_id && !primary.id_str)) {
+        return { valid: false, user: null, reason: 'Response missing user data' };
       }
 
       const user = {
-        id: String(data.id_str ?? data.id),
-        username: data.screen_name ?? '',
-        name: data.name ?? '',
+        id: String(primary.user_id ?? primary.id_str),
+        username: primary.screen_name ?? '',
+        name: primary.name ?? '',
       };
       return { valid: true, user, reason: 'ok' };
     } catch (err) {

@@ -36,10 +36,13 @@ function mockResponse(body, { status = 200, headers = {}, setCookies = [] } = {}
 const VALID_COOKIE_STRING = 'auth_token=abc123; ct0=csrf_tok; twid=u%3D999; guest_id=v1%3A1234';
 
 const VERIFY_CREDENTIALS_RESPONSE = {
-  id: 999,
-  id_str: '999',
-  name: 'Test User',
-  screen_name: 'testuser',
+  users: [{
+    user_id: '999',
+    name: 'Test User',
+    screen_name: 'testuser',
+    avatar_image_url: null,
+    is_auth_valid: true,
+  }],
 };
 
 // ---------------------------------------------------------------------------
@@ -266,7 +269,7 @@ describe('validateSession', () => {
     const result = await auth.validateSession();
 
     expect(result.valid).toBe(false);
-    expect(result.reason).toContain('missing user ID');
+    expect(result.reason).toContain('missing user data');
   });
 
   it('handles network errors gracefully', async () => {
@@ -510,7 +513,7 @@ describe('loginWithCredentials', () => {
           return res;
         }
       }
-      if (url.includes('verify_credentials')) {
+      if (url.includes('multi/list')) {
         return mockResponse(VERIFY_CREDENTIALS_RESPONSE);
       }
       return mockResponse({}, { status: 500 });
@@ -563,7 +566,7 @@ describe('loginWithCredentials', () => {
           return res;
         }
       }
-      if (url.includes('verify_credentials')) {
+      if (url.includes('multi/list')) {
         return mockResponse(VERIFY_CREDENTIALS_RESPONSE);
       }
       return mockResponse({}, { status: 500 });
@@ -609,7 +612,7 @@ describe('loginWithCredentials', () => {
           return res;
         }
       }
-      if (url.includes('verify_credentials')) {
+      if (url.includes('multi/list')) {
         return mockResponse(VERIFY_CREDENTIALS_RESPONSE);
       }
       return mockResponse({}, { status: 500 });
@@ -764,7 +767,7 @@ describe('refreshSession', () => {
           return res;
         }
       }
-      if (url.includes('verify_credentials')) {
+      if (url.includes('multi/list')) {
         return mockResponse(VERIFY_CREDENTIALS_RESPONSE);
       }
       return mockResponse({}, { status: 500 });
