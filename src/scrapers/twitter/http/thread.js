@@ -560,11 +560,11 @@ export async function scrapeConversation(client, tweetId, options = {}) {
       onProgress({ fetched: allTweets.length, limit });
     }
 
-    // Find next cursor
-    const showMoreCursor =
+    // Find next cursor — prefer Bottom (main pagination) over ShowMore (thread expansion)
+    const bottomCursor = cursors.find((c) => c.type === 'Bottom') ?? null;
+    const showMoreCursor = bottomCursor ??
       cursors.find(
         (c) =>
-          c.type === 'Bottom' ||
           c.type === 'ShowMore' ||
           c.type === 'ShowMoreThreads' ||
           c.type === 'ShowMoreThreadsPrompt',
