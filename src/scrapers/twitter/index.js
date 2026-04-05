@@ -444,8 +444,8 @@ export async function searchTweets(page, query, options = {}) {
  */
 export async function scrapeThread(page, tweetUrl) {
   const tweetUrlObject = new URL(tweetUrl);
-  const mainTweetId = tweetUrlObject.pathname.match(/status\/(\d+)/)?.[1] || null;
-  const mainAuthor = tweetUrlObject.pathname.split('/').filter(Boolean)[0] || null;
+  const mainTweetId = tweetUrlObject.pathname.match(/status\/(\d+)/)?.[1];
+  const mainAuthor = tweetUrlObject.pathname.split('/').filter(Boolean)[0];
 
   await page.goto(tweetUrl, { waitUntil: 'networkidle2' });
   await randomDelay();
@@ -458,48 +458,42 @@ export async function scrapeThread(page, tweetUrl) {
   const thread = await page.evaluate(({ mainTweetId, mainAuthor }) => {
     const articles = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
 
+    const NON_USER_PATHS = new Set(['i', 'home', 'search']);
+
     const extractAuthor = (article) => {
       const userName = article.querySelector('[data-testid="User-Name"]');
       if (userName) {
-        const links = Array.from(userName.querySelectorAll('a[href^="/"]'));
-        for (const link of links) {
-          const href = link.getAttribute('href') || '';
-          const handle = href.split('/').filter(Boolean)[0] || null;
-          if (handle && handle !== 'i' && handle !== 'home' && handle !== 'search') {
+        for (const link of userName.querySelectorAll('a[href^="/"]')) {
+          const handle = link.getAttribute('href').split('/').filter(Boolean)[0];
+          if (handle && !NON_USER_PATHS.has(handle)) {
             return handle;
           }
         }
       }
-
-      const fallbackLink = article.querySelector('a[href^="/"][href*="/status/"]');
-      const fallbackHandle = fallbackLink?.getAttribute('href')?.split('/').filter(Boolean)[0] || null;
-      return fallbackHandle;
+      return article.querySelector('a[href^="/"][href*="/status/"]')
+        ?.getAttribute('href')?.split('/').filter(Boolean)[0];
     };
 
     const dedup = new Map();
 
     for (const article of articles) {
-      const textEl = article.querySelector('[data-testid="tweetText"]');
-      const authorLink = article.querySelector('[data-testid="User-Name"] a[href^="/"]');
-      const timeEl = article.querySelector('time');
       const linkEl = article.querySelector('a[href*="/status/"]');
-
-      const id = linkEl?.href?.match(/status\/(\d+)/)?.[1] || null;
-      const author = extractAuthor(article) || authorLink?.href?.split('/').filter(Boolean)[0] || null;
-      const isMainTweet = Boolean(mainTweetId && id === mainTweetId);
-      const isMainAuthor = Boolean(mainAuthor && author === mainAuthor);
-
+      const id = linkEl?.href?.match(/status\/(\d+)/)?.[1];
       if (!id) continue;
+
+      const author = extractAuthor(article);
+      const isMainTweet = mainTweetId && id === mainTweetId;
+      const isMainAuthor = mainAuthor && author === mainAuthor;
       if (!isMainTweet && !isMainAuthor) continue;
 
       dedup.set(id, {
         id,
-        text: textEl?.textContent || null,
+        text: article.querySelector('[data-testid="tweetText"]')?.textContent,
         author,
-        timestamp: timeEl?.getAttribute('datetime') || null,
-        url: linkEl?.href || null,
-        isMainAuthor,
-        isMainTweet,
+        timestamp: article.querySelector('time')?.getAttribute('datetime'),
+        url: linkEl?.href,
+        isMainAuthor: !!isMainAuthor,
+        isMainTweet: !!isMainTweet,
         platform: 'twitter',
       });
     }

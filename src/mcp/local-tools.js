@@ -203,29 +203,38 @@ export async function x_get_thread({ url }) {
   return scrapeThread(pg, url);
 }
 
+let httpScraper = null;
+
+async function ensureHttpScraper() {
+  if (!httpScraper) {
+    const authToken = process.env.XACTIONS_SESSION_COOKIE;
+    const ct0 = process.env.XACTIONS_CT0_COOKIE;
+    const cookies = authToken && ct0
+      ? `auth_token=${authToken}; ct0=${ct0}`
+      : undefined;
+    httpScraper = await createHttpScraper({ cookies });
+  }
+  return httpScraper;
+}
+
 export async function x_get_replies({ tweetUrl, limit = 50, sort = 'relevant' }) {
   const tweetId = tweetUrl.match(/status\/(\d+)/)?.[1];
   if (!tweetId) {
     throw new Error(`❌ Could not extract tweet ID from URL: ${tweetUrl}`);
   }
 
-  // Use HTTP scraper (GraphQL API) — no browser needed, works with cookies
-  const cookies = process.env.XACTIONS_SESSION_COOKIE
-    ? `auth_token=${process.env.XACTIONS_SESSION_COOKIE}`
-    : undefined;
-  const scraper = await createHttpScraper({ cookies });
-
+  const scraper = await ensureHttpScraper();
   const sortBy = sort === 'recent' ? 'recency' : 'relevance';
   const result = await scraper.scrapeConversation(tweetId, { limit, sortBy });
 
   const replies = result.conversation.map((tweet) => ({
     id: tweet.id,
-    text: tweet.text || '',
-    author: tweet.author?.username || tweet.author?.name || '',
-    timestamp: tweet.createdAt || '',
-    likes: tweet.likes ?? 0,
-    replies: tweet.replies ?? 0,
-    retweets: tweet.retweets ?? 0,
+    text: tweet.text,
+    author: tweet.author?.username,
+    timestamp: tweet.createdAt,
+    likes: tweet.metrics?.likes,
+    replies: tweet.metrics?.replies,
+    retweets: tweet.metrics?.retweets,
   }));
 
   return {

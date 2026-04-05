@@ -15,17 +15,17 @@ That's it. XActions will auto-install and start the MCP server.
 
 ---
 
-## Getting Your auth_token
+## Getting Your Cookies
 
-Most tools require an X/Twitter session cookie for authentication.
+Most tools require X/Twitter session cookies for authentication.
 
 1. Go to [x.com](https://x.com) and **log in**
 2. Open **DevTools** (F12 or Cmd+Option+I)
 3. Go to **Application** → **Cookies** → `https://x.com`
-4. Find the cookie named **`auth_token`**
-5. Copy its value (a long hex string)
+4. Copy the value of **`auth_token`** (required for most tools)
+5. Copy the value of **`ct0`** (required for reply scraping and conversation tools)
 
-> ⚠️ Treat this like a password. Never share it publicly.
+> ⚠️ Treat these like passwords. Never share them publicly.
 
 ---
 
@@ -46,7 +46,8 @@ Most tools require an X/Twitter session cookie for authentication.
       "command": "npx",
       "args": ["-y", "xactions-mcp"],
       "env": {
-        "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+        "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+        "XACTIONS_CT0_COOKIE": "your_ct0_here"
       }
     }
   }
@@ -78,7 +79,8 @@ Add to your **Cursor Settings** → **MCP Servers**:
       "command": "npx",
       "args": ["-y", "xactions-mcp"],
       "env": {
-        "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+        "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+        "XACTIONS_CT0_COOKIE": "your_ct0_here"
       }
     }
   }
@@ -100,7 +102,8 @@ Add to your **Windsurf Settings** (`~/.codeium/windsurf/mcp_config.json`):
       "command": "npx",
       "args": ["-y", "xactions-mcp"],
       "env": {
-        "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+        "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+        "XACTIONS_CT0_COOKIE": "your_ct0_here"
       }
     }
   }
@@ -121,7 +124,8 @@ Add to your **VS Code** user `settings.json` or `.vscode/mcp.json`:
         "command": "npx",
         "args": ["-y", "xactions-mcp"],
         "env": {
-          "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+          "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+          "XACTIONS_CT0_COOKIE": "your_ct0_here"
         }
       }
     }
@@ -147,7 +151,8 @@ Then use `xactions-mcp` as the command instead of `npx`:
     "xactions": {
       "command": "xactions-mcp",
       "env": {
-        "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+        "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+        "XACTIONS_CT0_COOKIE": "your_ct0_here"
       }
     }
   }
@@ -161,6 +166,7 @@ Then use `xactions-mcp` as the command instead of `npx`:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `XACTIONS_SESSION_COOKIE` | For most tools | Your X/Twitter `auth_token` cookie |
+| `XACTIONS_CT0_COOKIE` | For replies/conversations | Your X/Twitter `ct0` (CSRF) cookie |
 | `OPENROUTER_API_KEY` | For AI tools | Free key from [openrouter.ai](https://openrouter.ai) |
 | `XACTIONS_MODE` | No | `local` (default, free) or `remote` |
 | `DEBUG` | No | Set to `true` for verbose error stacks |
@@ -260,7 +266,8 @@ For MCP client configs, the `-p` flag approach:
       "command": "npx",
       "args": ["-y", "-p", "xactions", "xactions-mcp"],
       "env": {
-        "XACTIONS_SESSION_COOKIE": "your_auth_token_here"
+        "XACTIONS_SESSION_COOKIE": "your_auth_token_here",
+        "XACTIONS_CT0_COOKIE": "your_ct0_here"
       }
     }
   }
